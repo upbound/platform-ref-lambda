@@ -1,0 +1,70 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: xbuckets.example.upbound.io
+spec:
+  claimNames:
+    kind: Bucket
+    plural: buckets
+  group: example.upbound.io
+  names:
+    kind: XBucket
+    plural: xbuckets
+  connectionSecretKeys:
+    - bucket-name
+  versions:
+    - name: v1alpha1
+      served: true
+      referenceable: true
+      schema:
+        openAPIV3Schema:
+          properties:
+            spec:
+              description: Define Bucket Specifications
+              properties:
+                parameters:
+                  description: Bucket Parameters
+                  properties:
+                    deletionPolicy:
+                      description: When the Composition is deleleted, delelete the AWS resources. Defaults to Delete
+                      enum:
+                      - Delete
+                      - Orphan
+                      type: string
+                      default: Delete
+                    providerConfigName:
+                      description: Crossplane ProviderConfig to use for provisioning this resources
+                      type: string
+                      default: default
+                    region:
+                      description: Cloud region
+                      default: us-east-1
+                      type: string
+                    bucketName:
+                      description: Name of the bucket
+                      type: string
+                    tags:
+                      description: Map of additional AWS Tags to add to all resources
+                      additionalProperties:
+                        type: string
+                      type: object
+                  required:
+                  - bucketName
+                  - deletionPolicy
+                  - providerConfigName
+                  - region
+                  type: object
+              required:
+              - parameters
+              type: object
+            status:
+              description: Status of the Bucket
+              properties:
+                bucketName:
+                  type: string
+                bucketArn:
+                  type: string
+                bucketDomainName:
+                  type: string
+              type: object
+          type: object%                                                                                                                                (⎈|kind-kind:N/A)➜  SSMParameters git:(main) ✗ 

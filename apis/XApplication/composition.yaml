@@ -1,0 +1,183 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: xapplications.example.upbound.io
+  labels:
+    crossplane.io/provider: aws
+spec:
+  writeConnectionSecretsToNamespace: upbound-system
+  compositeTypeRef:
+    apiVersion: example.upbound.io/v1alpha1
+    kind: XApplication
+  patchSets:
+  - name: providerConfigRef
+    patches:
+    - type: FromCompositeFieldPath
+      fromFieldPath: spec.parameters.providerConfigName
+      toFieldPath: spec.providerConfigRef.name
+  - name: lambdaRegion
+    patches:
+    - type: FromCompositeFieldPath
+      fromFieldPath: spec.parameters.lambdaRegion
+      toFieldPath: spec.forProvider.region
+  - name: deletionPolicy
+    patches:
+    - type: FromCompositeFieldPath
+      fromFieldPath: spec.parameters.deletionPolicy
+      toFieldPath: spec.deletionPolicy
+  - name: userTags
+    patches:
+    - type: FromCompositeFieldPath
+      fromFieldPath: spec.parameters.tags
+      toFieldPath: spec.forProvider.tags
+      policy:
+        mergeOptions:
+          appendSlice: true
+          keepMapValues: false
+  - name: primaryRegion
+    patches:
+    - type: FromCompositeFieldPath
+      fromFieldPath: status.parameters.primaryRegion
+      toFieldPath: spec.forProvider.region
+      policy:
+        fromFieldPath: Required
+  - name: backupRegion
+    patches:
+    - type: FromCompositeFieldPath
+      fromFieldPath: status.parameters.backupRegion
+      toFieldPath: spec.forProvider.region
+      policy:
+        fromFieldPath: Required
+  resources:
+  - name: primary-region-lookup
+    base:
+      apiVersion: lambda.aws.upbound.io/v1beta1
+      kind: Invocation
+      spec:
+        forProvider:
+          functionNameSelector:
+            matchLabels:
+              infrastructure.example.com/function-role: ssm-parameter-lookup
+          input: ""
+    patches:
+        - type: PatchSet
+          patchSetName: providerConfigRef
+        - type: PatchSet
+          patchSetName: lambdaRegion
+        - type: PatchSet
+          patchSetName: deletionPolicy
+        - type: PatchSet
+          patchSetName: userTags
+        - type: CombineFromComposite
+          combine:
+            # The patch will only be applied when all variables have non-zero values.
+            variables:
+            - fromFieldPath: spec.parameters.teamName
+            - fromFieldPath: spec.parameters.primaryRegionPath
+            strategy: string
+            string:
+              fmt: |-
+                  {
+                      "parameter": "/%s/%s"
+                  }      
+          toFieldPath: spec.forProvider.input
+          policy:
+            fromFieldPath: Required
+        - type: ToCompositeFieldPath
+          fromFieldPath: status.atProvider.result
+          toFieldPath: status.parameters.primaryRegion
+          transforms:
+            - type: string
+              string:
+                type: Regexp
+                regexp:
+                  match: '"(.+)"' 
+                  group: 1
+  - name: backup-region-lookup
+    base:
+      apiVersion: lambda.aws.upbound.io/v1beta1
+      kind: Invocation
+      spec:
+        forProvider:
+          functionNameSelector:
+            matchLabels:
+              infrastructure.example.com/function-role: ssm-parameter-lookup
+          input: ""
+    patches:
+        - type: PatchSet
+          patchSetName: providerConfigRef
+        - type: PatchSet
+          patchSetName: lambdaRegion
+        - type: PatchSet
+          patchSetName: deletionPolicy
+        - type: PatchSet
+          patchSetName: userTags
+        - type: CombineFromComposite
+          combine:
+            # The patch will only be applied when all variables have non-zero values.
+            variables:
+            - fromFieldPath: spec.parameters.teamName
+            - fromFieldPath: spec.parameters.backupRegionPath
+            strategy: string
+            string:
+              fmt: |-
+                  {
+                      "parameter": "/%s/%s"
+                  }      
+          toFieldPath: spec.forProvider.input
+          policy:
+            fromFieldPath: Required
+        - type: ToCompositeFieldPath
+          fromFieldPath: status.atProvider.result
+          toFieldPath: status.parameters.backupRegion
+          transforms:
+            - type: string
+              string:
+                type: Regexp
+                regexp:
+                  match: '"(.+)"' 
+                  group: 1
+  - name: primary-vpc
+    base:
+      apiVersion: ec2.aws.upbound.io/v1beta1
+      kind: VPC
+      spec:
+        forProvider:
+          cidrBlock: 172.16.0.0/16
+          tags:
+            Name: DemoVpc
+    patches:
+        - type: PatchSet
+          patchSetName: providerConfigRef
+        - type: PatchSet
+          patchSetName: lambdaRegion
+        - type: PatchSet
+          patchSetName: deletionPolicy
+        - type: PatchSet
+          patchSetName: userTags 
+        - type: PatchSet
+          patchSetName: primaryRegion
+        - fromFieldPath: metadata.name
+          toFieldPath: spec.forProvider.tags.Name
+  - name: backup-vpc
+    base:
+      apiVersion: ec2.aws.upbound.io/v1beta1
+      kind: VPC
+      spec:
+        forProvider:
+          cidrBlock: 172.16.0.0/16
+          tags:
+            Name: DemoVpc
+    patches:
+        - type: PatchSet
+          patchSetName: providerConfigRef
+        - type: PatchSet
+          patchSetName: lambdaRegion
+        - type: PatchSet
+          patchSetName: deletionPolicy
+        - type: PatchSet
+          patchSetName: userTags 
+        - type: PatchSet
+          patchSetName: backupRegion
+        - fromFieldPath: metadata.name
+          toFieldPath: spec.forProvider.tags.Name

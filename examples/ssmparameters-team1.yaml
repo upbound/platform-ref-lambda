@@ -1,0 +1,27 @@
+apiVersion: example.upbound.io/v1alpha1
+kind: Parameter
+metadata:
+  name: primary-region
+  namespace: team-1
+spec:
+  parameters:
+    providerConfigName: default
+    region: us-east-1
+    insecureValue: us-east-1
+    parameterName: /team-1/primaryRegion
+    tags:
+      owner: team-1
+---
+apiVersion: example.upbound.io/v1alpha1
+kind: Parameter
+metadata:
+  name: backup-region
+  namespace: team-1
+spec:
+  parameters:
+    providerConfigName: default
+    region: us-east-1
+    insecureValue: us-west-1
+    parameterName: /team-1/backupRegion
+    tags:
+      owner: team-1

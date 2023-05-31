@@ -1,0 +1,78 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: xapplications.example.upbound.io
+spec:
+  claimNames:
+    kind: Application
+    plural: applications
+  group: example.upbound.io
+  names:
+    kind: XApplication
+    plural: xapplications
+  versions:
+    - name: v1alpha1
+      served: true
+      referenceable: true
+      schema:
+        openAPIV3Schema:
+          properties:
+            spec:
+              description: Define Application Parameter Specifications
+              properties:
+                parameters:
+                  description: Application Parameters
+                  properties:
+                    deletionPolicy:
+                      description: When the Composition is deleleted, delelete the AWS resources. Defaults to Delete
+                      enum:
+                      - Delete
+                      - Orphan
+                      type: string
+                      default: Delete
+                    providerConfigName:
+                      description: Crossplane ProviderConfig to use for provisioning this resources
+                      type: string
+                      default: default
+                    tags:
+                      description: Map of additional AWS Tags to add to all resources
+                      additionalProperties:
+                        type: string
+                      type: object
+                    lambdaRegion:
+                      description: region where Lambda Lookup functions are deployed
+                      type: string
+                      default: us-east-1
+                    teamName:
+                      description: Team Name for looking up parameters
+                      type: string
+                    primaryRegionPath:
+                      description: Primary region lookup key
+                      type: string
+                      default: primaryRegion
+                    backupRegionPath:
+                      description: Backup region lookup key
+                      type: string
+                      default: backupRegion
+                  required:
+                  - deletionPolicy
+                  - lambdaRegion
+                  - providerConfigName
+                  - teamName
+                  type: object
+              required:
+              - parameters
+              type: object
+            status:
+              description: Status of the Application
+              properties:
+                parameters:
+                  description: Results of Paramter Lookup
+                  properties:
+                    primaryRegion:
+                      type: string
+                    backupRegion:
+                      type: string
+                  type: object
+              type: object
+          type: object

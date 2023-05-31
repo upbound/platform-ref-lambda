@@ -1,0 +1,207 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: xfunction.example.upbound.io
+  labels:
+    crossplane.io/provider: aws
+spec:
+  writeConnectionSecretsToNamespace: upbound-system
+  compositeTypeRef:
+    apiVersion: example.upbound.io/v1alpha1
+    kind: XFunction
+  patchSets:
+  - name: providerConfigRef
+    patches:
+    - type: FromCompositeFieldPath
+      fromFieldPath: spec.parameters.providerConfigName
+      toFieldPath: spec.providerConfigRef.name
+  - name: region
+    patches:
+    - type: FromCompositeFieldPath
+      fromFieldPath: spec.parameters.region
+      toFieldPath: spec.forProvider.region
+  - name: deletionPolicy
+    patches:
+    - type: FromCompositeFieldPath
+      fromFieldPath: spec.parameters.deletionPolicy
+      toFieldPath: spec.deletionPolicy
+  - name: userTags
+    patches:
+    - type: FromCompositeFieldPath
+      fromFieldPath: spec.parameters.tags
+      toFieldPath: spec.forProvider.tags
+      policy:
+        mergeOptions:
+          appendSlice: true
+          keepMapValues: false
+  resources:
+    - name: lambda-role
+      base:
+        apiVersion: iam.aws.upbound.io/v1beta1
+        kind: Role
+        metadata:
+          labels:
+            role: lambda-ssm
+        spec:
+          forProvider:
+            assumeRolePolicy: |
+              {
+                "Version": "2012-10-17",
+                "Statement": [
+                  {
+                    "Effect": "Allow",
+                    "Principal": {
+                      "Service": "lambda.amazonaws.com"
+                    },
+                    "Action": "sts:AssumeRole"
+                  }
+                ]
+              }
+      patches:
+        - type: PatchSet
+          patchSetName: providerConfigRef
+        - type: PatchSet
+          patchSetName: region
+        - type: PatchSet
+          patchSetName: deletionPolicy
+        - type: PatchSet
+          patchSetName: userTags
+    - name: lambda-ssm-parameter-iam-policy
+      base:
+        apiVersion: iam.aws.upbound.io/v1beta1
+        kind: Policy
+        metadata:
+          labels:
+            role: ssm-access-policy
+        spec:
+          forProvider:
+            policy: |
+              {
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Sid": "SSMAccess",
+                        "Effect": "Allow",
+                        "Action": [
+                            "ssm:PutParameter",
+                            "ssm:LabelParameterVersion",
+                            "ssm:DeleteParameter",
+                            "ssm:UnlabelParameterVersion",
+                            "ssm:GetParameterHistory",
+                            "ssm:GetParametersByPath",
+                            "ssm:GetParameters",
+                            "ssm:GetParameter",
+                            "ssm:DeleteParameters"
+                        ],
+                        "Resource": "arn:aws:ssm:*:*:parameter/*"
+                    }
+                ]
+              }
+      patches:
+        - type: PatchSet
+          patchSetName: providerConfigRef
+        - type: PatchSet
+          patchSetName: region
+        - type: PatchSet
+          patchSetName: deletionPolicy
+        - type: PatchSet
+          patchSetName: userTags
+        - type: ToCompositeFieldPath
+          fromFieldPath: spec.atProvider.arn
+          toFieldPath: status.policyArn
+    - name: lambda-ssm-access-policy-attachment
+      base:
+        apiVersion: iam.aws.upbound.io/v1beta1
+        kind: RolePolicyAttachment
+        spec:
+          forProvider:
+            policyArnSelector:
+              matchControllerRef: true
+              matchLabels: 
+                  role: ssm-access-policy
+            roleSelector:
+              matchControllerRef: true
+              matchLabels:
+                  role: lambda-ssm
+      patches:
+        - type: PatchSet
+          patchSetName: providerConfigRef
+        - type: PatchSet
+          patchSetName: region
+        - type: PatchSet
+          patchSetName: deletionPolicy
+        - type: PatchSet
+          patchSetName: userTags
+    - name: lambda-execute-policy-attachment
+      base:
+        apiVersion: iam.aws.upbound.io/v1beta1
+        kind: RolePolicyAttachment
+        spec:
+          forProvider:
+            policyArn: arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+            roleSelector:
+              matchControllerRef: true
+              matchLabels:
+                role: lambda-ssm
+      patches:
+        - type: PatchSet
+          patchSetName: providerConfigRef
+        - type: PatchSet
+          patchSetName: region
+        - type: PatchSet
+          patchSetName: deletionPolicy
+        - type: PatchSet
+          patchSetName: userTags
+    - name: lambda-function
+      base:
+        apiVersion: lambda.aws.upbound.io/v1beta1
+        kind: Function
+        metadata:
+          labels:
+            infrastructure.example.com/function-role: ssm-parameter-lookup
+        spec:
+          forProvider:
+            packageType: Zip
+            runtime: python3.9
+            roleSelector:
+              matchControllerRef: true
+              matchLabels:
+                role: lambda-ssm
+      patches:
+        - type: PatchSet
+          patchSetName: providerConfigRef
+        - type: PatchSet
+          patchSetName: region
+        - type: PatchSet
+          patchSetName: deletionPolicy
+        - type: PatchSet
+          patchSetName: userTags
+        - fromFieldPath: metadata.name
+          toFieldPath: spec.forProvider.functionName
+        - fromFieldPath: spec.parameters.handler
+          toFieldPath: spec.forProvider.handler
+          policy:
+            fromFieldPath: Required
+        - fromFieldPath: spec.parameters.s3BucketName
+          toFieldPath: spec.forProvider.s3Bucket
+          policy:
+            fromFieldPath: Required
+        - fromFieldPath: spec.parameters.s3ObjectKey
+          toFieldPath: spec.forProvider.s3Key
+          policy:
+            fromFieldPath: Required
+        - fromFieldPath: spec.parameters.s3ObjectVersion
+          toFieldPath: spec.forProvider.s3ObjectVersion
+        - fromFieldPath: spec.parameters.environmentVariables
+          toFieldPath: spec.forProvider.environment[0].variables
+          policy:
+            mergeOptions:
+              keepMapValues: true
+        - type: ToCompositeFieldPath
+          fromFieldPath: status.atProvider.arn
+          toFieldPath: status.functionArn
+        - type: ToCompositeFieldPath
+          fromFieldPath: status.atProvider.id
+          toFieldPath: status.functionName
+
+   

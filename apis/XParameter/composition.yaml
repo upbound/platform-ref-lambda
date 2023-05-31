@@ -1,0 +1,71 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: xssmparameter.example.upbound.io
+  labels:
+    crossplane.io/provider: aws
+spec:
+  writeConnectionSecretsToNamespace: upbound-system
+  compositeTypeRef:
+    apiVersion: example.upbound.io/v1alpha1
+    kind: XParameter
+  patchSets:
+  - name: providerConfigRef
+    patches:
+    - type: FromCompositeFieldPath
+      fromFieldPath: spec.parameters.providerConfigName
+      toFieldPath: spec.providerConfigRef.name
+  - name: region
+    patches:
+    - type: FromCompositeFieldPath
+      fromFieldPath: spec.parameters.region
+      toFieldPath: spec.forProvider.region
+  - name: deletionPolicy
+    patches:
+    - type: FromCompositeFieldPath
+      fromFieldPath: spec.parameters.deletionPolicy
+      toFieldPath: spec.deletionPolicy
+  - name: userTags
+    patches:
+    - type: FromCompositeFieldPath
+      fromFieldPath: spec.parameters.tags
+      toFieldPath: spec.forProvider.tags
+      policy:
+        mergeOptions:
+          appendSlice: true
+          keepMapValues: false
+  resources:
+    - name: ssmparameter
+      base:
+        apiVersion: ssm.aws.upbound.io/v1beta1
+        kind: Parameter
+        spec:
+          forProvider:
+            type: String
+      patches:
+        - type: PatchSet
+          patchSetName: providerConfigRef
+        - type: PatchSet
+          patchSetName: region
+        - type: PatchSet
+          patchSetName: deletionPolicy
+        - type: PatchSet
+          patchSetName: userTags
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.insecureValue
+          toFieldPath: spec.forProvider.insecureValue
+          policy:
+            fromFieldPath: Required
+        # We patch the external name since Kubernetes does not support / characters
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.parameterName
+          toFieldPath: metadata.annotations[crossplane.io/external-name]
+          policy:
+            fromFieldPath: Required
+        - type: ToCompositeFieldPath
+          fromFieldPath: spec.forProvider.arn # see https://github.com/upbound/provider-aws/issues/678
+          toFieldPath: status.parameterArn
+        - type: ToCompositeFieldPath
+          fromFieldPath: status.atProvider.id
+          toFieldPath: status.parameterId
+   

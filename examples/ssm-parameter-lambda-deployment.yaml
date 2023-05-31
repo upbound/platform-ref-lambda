@@ -1,0 +1,24 @@
+apiVersion: example.upbound.io/v1alpha1
+kind: FunctionDeployment
+metadata:
+  name: ssm-paramter-lookup
+  namespace: default
+spec:
+  parameters:
+    handler: index.lambda_handler
+    providerConfigName: default
+    s3BucketName: upbound-example-lambda
+    s3ObjectKey: ssm-parameters.zip
+    region: us-east-1
+    # run make package-function to get the base64 of the lambda zip 
+    functionZipBase64: |
+      UEsDBBQAAAAIADBtmVZ2zjU/5QAAAI8BAAAIABwAaW5kZXgucHlVVAkAA4vYR2SL2EdkdXgLAAEE
+      7QMAAATuAwAAVZDBbsMgDIbvPIXVHUi0KYftVinHXaeplXaJqogGN2UKBoHT9vFHYW0ULrbh/+wf
+      G+tdYPiNjoQp+dGx+xDCB0NcyRPycDY0gldBWWQMUdZCxGj7YTJIDG0hmlJWMj3dFRpPMCL3T66i
+      FOutgHSel4leWjVr/VeKbYYyE5DnQAvaye9HKg+d/FHTjPIgyuRJ2aNW/VmRnlIrvKT2bzA4Yrzx
+      v4mX8sXNDgc0F9SQVVvYwGteSKNn6+ODNaRTbN/rlZu14yztpF981VBGBWUiwudtQM/GUSX3Liny
+      Yq/3JV6Do1HWf1BLAQIeAxQAAAAIADBtmVZ2zjU/5QAAAI8BAAAIABgAAAAAAAEAAAC0gQAAAABp
+      bmRleC5weVVUBQADi9hHZHV4CwABBO0DAAAE7gMAAFBLBQYAAAAAAQABAE4AAAAnAQAAAAA=
+    tags:
+      project: upbound-example
+

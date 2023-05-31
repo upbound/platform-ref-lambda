@@ -1,0 +1,44 @@
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: upbound-release-candidates-provider-family-aws 
+spec:
+  package: xpkg.upbound.io/upbound-release-candidates/provider-family-aws:v0.37.0
+---
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: provider-aws-iam
+spec:
+  package: xpkg.upbound.io/upbound-release-candidates/provider-aws-iam:v0.37.0
+  skipDependencyResolution: true
+---
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: provider-aws-ec2
+spec:
+  package: xpkg.upbound.io/upbound-release-candidates/provider-aws-ec2:v0.37.0
+  skipDependencyResolution: true
+---
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: provider-aws-lambda
+spec:
+  package: xpkg.upbound.io/upbound-release-candidates/provider-aws-lambda:v0.37.0
+  skipDependencyResolution: true
+---
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: provider-aws-s3
+spec:
+  package: xpkg.upbound.io/upbound-release-candidates/provider-aws-s3:v0.37.0
+---
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: provider-aws-ssm
+spec:
+  package: xpkg.upbound.io/upbound-release-candidates/provider-aws-ssm:v0.37.0

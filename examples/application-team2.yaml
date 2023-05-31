@@ -1,0 +1,12 @@
+apiVersion: example.upbound.io/v1alpha1
+kind: Application
+metadata:
+  name: team-2-app
+  namespace: team-2
+spec:
+  parameters:
+    providerConfigName: default
+    teamName: team-2
+    tags:
+      Owner: team-2
+

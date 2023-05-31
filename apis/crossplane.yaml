@@ -1,0 +1,46 @@
+apiVersion: meta.pkg.crossplane.io/v1
+kind: Configuration
+metadata:
+  name: platform-ref-lambda
+  annotations:
+    meta.crossplane.io/maintainer: Upbound <support@upbound.io>
+    meta.crossplane.io/source: github.com/upbound/platform-ref-lambda
+    meta.crossplane.io/license: Apache-2.0
+    meta.crossplane.io/description: |
+      This reference platform Configuration for AWS Lambda
+      is a starting point to build, run, and operate A Serverless
+      abstraction and offer a self-service capability to your internal teams.
+
+    meta.crossplane.io/readme: |
+      This reference platform Configuration for AWS Lambda
+      is a starting point to build, run, and operate A Serverless
+      abstraction and offer a self-service capability to your internal teams.
+      
+      The overall Composition supports the use case of querying SSM parameters
+      and using the values for infrastructure Provisioning. This reference platform
+      includes an XBucket Composition for creating S3 Buckets, XParameter for defining
+      SSM parameters, XFunction for creating a Lambda Function, and XFunctionDeployment
+      for uploading a zip file to a bucket and creating a Lambda function.
+      This Configuration uses cloud Lambda service primitives from the [Upbound Official AWS
+      Provider](https://marketplace.upbound.io/providers/upbound/provider-aws).
+
+      To learn more checkout the [GitHub
+      repo](https://github.com/upbound/platform-ref-lambda/) that you can copy and
+      customize to meet the exact needs of your organization!
+spec:
+  skipDependencyResolution: true
+  crossplane:
+    version: ">=v1.12.1-0"  # Minimum version for family providers
+  dependsOn:
+    # - provider: xpkg.upbound.io/upbound-release-candidates/provider-family-aws
+    #   version: ">=v0.37.0"
+    - provider: xpkg.upbound.io/upbound-release-candidates/provider-aws-ec2
+      version: ">=v0.37.0" 
+    - provider: xpkg.upbound.io/upbound-release-candidates/provider-aws-iam
+      version: ">=v0.37.0"
+    - provider: xpkg.upbound.io/upbound-release-candidates/provider-aws-lambda
+      version: ">=v0.37.0"
+    - provider: xpkg.upbound.io/upbound-release-candidates/provider-aws-s3
+      version: ">=v0.37.0"
+    - provider: xpkg.upbound.io/upbound-release-candidates/provider-aws-ssm
+      version: ">=v0.37.0"

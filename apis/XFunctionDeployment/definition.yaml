@@ -1,0 +1,106 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: xfunctiondeployments.example.upbound.io
+spec:
+  claimNames:
+    kind: FunctionDeployment
+    plural: functiondeployments
+  group: example.upbound.io
+  names:
+    kind: XFunctionDeployment
+    plural: xfunctiondeployments
+  versions:
+    - name: v1alpha1
+      served: true
+      referenceable: true
+      schema:
+        openAPIV3Schema:
+          properties:
+            spec:
+              description: Define Serverless Function Parameter Specifications
+              properties:
+                parameters:
+                  description: Function Parameters
+                  properties:
+                    deletionPolicy:
+                      description: When the Composition is deleleted, delelete the AWS resources. Defaults to Delete
+                      enum:
+                      - Delete
+                      - Orphan
+                      type: string
+                      default: Delete
+                    providerConfigName:
+                      description: Crossplane ProviderConfig to use for provisioning this resources
+                      type: string
+                      default: default
+                    region:
+                      description: Cloud region
+                      default: us-east-1
+                      type: string
+                    s3BucketName:
+                      description: S3 Bucket to create.
+                      type: string
+                    s3ObjectKey:
+                      description: S3 key of an object containing the function's Zip deployment package
+                      type: string
+                    functionZipBase64:
+                      description: Base64 encoded zip file containing the function. 
+                      type: string
+                    handler:
+                      description: Function entrypoint in your code.
+                      type: string
+                    environmentVariables:
+                      description: Map of Environment variables to pass to the function.
+                      type: object
+                      additionalProperties:
+                        type: string
+                    tags:
+                      description: Map of additional AWS Tags to add to all resources
+                      additionalProperties:
+                        type: string
+                      type: object
+                  required:
+                  - deletionPolicy
+                  - functionZipBase64
+                  - handler
+                  - providerConfigName
+                  - region
+                  - s3BucketName
+                  - s3ObjectKey
+                  type: object
+              required:
+              - parameters
+              type: object
+            status:
+              description: Status of the Function Deployment
+              properties:
+                bucket:
+                  description: Status of the Bucket
+                  properties:
+                    bucketName:
+                      type: string
+                    bucketArn:
+                      type: string
+                    bucketDomainName:
+                      type: string
+                  type: object
+                functionZipObject:
+                  description: Status of the .zip lambda archive uploaded to S3
+                  properties:
+                    id:
+                      type: string
+                    versionId:
+                      description: Unique version ID value for the object. Can be used to trigger new Lambda deployments.
+                      type: string
+                  type: object
+                function:
+                  description: Status of the Function
+                  properties:
+                    name:
+                      type: string
+                    arn:
+                      type: string
+                  type: object
+              type: object
+          type: object

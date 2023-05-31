@@ -1,0 +1,139 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: xfunctiondeployment.example.upbound.io
+  labels:
+    crossplane.io/provider: aws
+spec:
+  writeConnectionSecretsToNamespace: upbound-system
+  compositeTypeRef:
+    apiVersion: example.upbound.io/v1alpha1
+    kind: XFunctionDeployment
+  patchSets:
+  - name: providerConfigRef
+    patches:
+    - type: FromCompositeFieldPath
+      fromFieldPath: spec.parameters.providerConfigName
+      toFieldPath: spec.providerConfigRef.name
+  - name: region
+    patches:
+    - type: FromCompositeFieldPath
+      fromFieldPath: spec.parameters.region
+      toFieldPath: spec.forProvider.region
+  - name: deletionPolicy
+    patches:
+    - type: FromCompositeFieldPath
+      fromFieldPath: spec.parameters.deletionPolicy
+      toFieldPath: spec.deletionPolicy
+  - name: userTags
+    patches:
+    - type: FromCompositeFieldPath
+      fromFieldPath: spec.parameters.tags
+      toFieldPath: spec.forProvider.tags
+      policy:
+        mergeOptions:
+          appendSlice: true
+          keepMapValues: false
+  resources:
+    - name: s3bucket
+      base: 
+        apiVersion: example.upbound.io/v1alpha1
+        kind: XBucket
+      patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.deletionPolicy
+          toFieldPath: spec.parameters.deletionPolicy
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.providerConfigName
+          toFieldPath: spec.parameters.providerConfigName
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.region
+          toFieldPath: spec.parameters.region
+        - type: PatchSet
+          patchSetName: userTags 
+        - fromFieldPath: spec.parameters.s3BucketName
+          toFieldPath: spec.parameters.bucketName
+        - type: ToCompositeFieldPath
+          fromFieldPath: status.bucketName
+          toFieldPath: status.bucket.bucketName
+        - type: ToCompositeFieldPath
+          fromFieldPath: status.bucketArn
+          toFieldPath: status.bucket.bucketArn
+        - type: ToCompositeFieldPath
+          fromFieldPath: status.bucketDomainName
+          toFieldPath: status.bucket.bucketDomainName
+    - name: lambda-s3-zip-archive
+      base:
+        apiVersion: s3.aws.upbound.io/v1beta1
+        kind: BucketObject
+        spec:
+          forProvider:
+            key: test.zip
+      patches:
+        - type: PatchSet
+          patchSetName: providerConfigRef
+        - type: PatchSet
+          patchSetName: region
+        - type: PatchSet
+          patchSetName: deletionPolicy
+        - type: PatchSet
+          patchSetName: userTags
+        - type: FromCompositeFieldPath
+          fromFieldPath: status.bucket.bucketName
+          toFieldPath: spec.forProvider.bucket
+          policy:
+            fromFieldPath: Required
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.s3ObjectKey
+          toFieldPath: spec.forProvider.key
+          policy:
+            fromFieldPath: Required
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.functionZipBase64
+          toFieldPath: spec.forProvider.contentBase64
+          policy:
+            fromFieldPath: Required
+        - type: ToCompositeFieldPath
+          fromFieldPath: status.atProvider.id
+          toFieldPath: status.functionZipObject.id
+        - type: ToCompositeFieldPath
+          fromFieldPath: status.atProvider.versionId
+          toFieldPath: status.functionZipObject.versionId
+    - name: lambda-function
+      base:
+        apiVersion: example.upbound.io/v1alpha1
+        kind: XFunction
+      patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath: metadata.name
+          toFieldPath: metadata.name
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.deletionPolicy
+          toFieldPath: spec.parameters.deletionPolicy
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.providerConfigName
+          toFieldPath: spec.parameters.providerConfigName
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.region
+          toFieldPath: spec.parameters.region
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.parameters.tags
+          toFieldPath: spec.parameters.tags
+        - fromFieldPath: spec.parameters.s3BucketName
+          toFieldPath: spec.parameters.s3BucketName
+        - fromFieldPath: spec.parameters.s3ObjectKey
+          toFieldPath: spec.parameters.s3ObjectKey
+        - fromFieldPath: spec.parameters.handler
+          toFieldPath: spec.parameters.handler
+        - fromFieldPath: spec.parameters.environmentVariables
+          toFieldPath: spec.parameters.environmentVariables
+        - fromFieldPath: status.functionZipObject.versionId
+          toFieldPath: spec.parameters.s3ObjectVersion
+        - type: ToCompositeFieldPath
+          fromFieldPath: status.functionArn
+          toFieldPath: status.function.arn
+        - type: ToCompositeFieldPath
+          fromFieldPath: status.functionName
+          toFieldPath: status.function.name
+
+    
