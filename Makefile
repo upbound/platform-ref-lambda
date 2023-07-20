@@ -11,11 +11,10 @@ PLATFORMS ?= linux_amd64
 # ====================================================================================
 # Setup Kubernetes tools
 
-UP_VERSION = v0.16.1
+UP_VERSION = v0.18.0
 UP_CHANNEL = stable
 UPTEST_VERSION = v0.5.0
-UPTEST_CLAIMS = examples/ssm-parameter-lambda-deployment.yaml,examples/ssmparameters-team1.yaml,examples/ssmparameters-team2.yaml,examples/application-team1.yaml,examples/application-team2.yaml               
-#UPTEST_CLAIMS = examples/ssmparameters-team1.yaml
+UPTEST_CLAIMS = examples/ssm-parameter-lambda-deployment.yaml,examples/ssmparameters-team1.yaml,examples/ssmparameters-team2.yaml,examples/application-team1.yaml,examples/application-team2.yaml
 # ====================================================================================
 # Setup Helm
 
@@ -27,7 +26,6 @@ HELM_CHART_LINT_ARGS_$(PROJECT_NAME) = --set nameOverride='',imagePullSecrets=''
 HELM_CHARTS_DIR ?= $(ROOT_DIR)/chart
 
 -include build/makelib/k8s_tools.mk
-# -include makelib/helmoci.mk
 
 # Custom makefile for packaging lambda functions
 -include makelib/lambda.mk
@@ -84,4 +82,3 @@ uptest: $(UPTEST) $(KUBECTL) $(KUTTL)
 e2e: build controlplane.up local.xpkg.deploy.configuration.$(PROJECT_NAME) uptest
 
 .PHONY: uptest e2e
-

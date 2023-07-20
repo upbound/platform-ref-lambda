@@ -30,17 +30,17 @@ metadata:
 spec:
   skipDependencyResolution: true
   crossplane:
-    version: ">=v1.12.1-0"  # Minimum version for family providers
+    version: ">=v1.12.1-0"
   dependsOn:
-    # - provider: xpkg.upbound.io/upbound-release-candidates/provider-family-aws
-    #   version: ">=v0.37.0"
-    - provider: xpkg.upbound.io/upbound-release-candidates/provider-aws-ec2
+    - provider: xpkg.upbound.io/upbound/provider-family-aws
+      version: ">=v0.37.0"
+    - provider: xpkg.upbound.io/upbound/provider-aws-ec2
       version: ">=v0.37.0" 
-    - provider: xpkg.upbound.io/upbound-release-candidates/provider-aws-iam
+    - provider: xpkg.upbound.io/upbound/provider-aws-iam
       version: ">=v0.37.0"
-    - provider: xpkg.upbound.io/upbound-release-candidates/provider-aws-lambda
+    - provider: xpkg.upbound.io/upbound/provider-aws-lambda
       version: ">=v0.37.0"
-    - provider: xpkg.upbound.io/upbound-release-candidates/provider-aws-s3
+    - provider: xpkg.upbound.io/upbound/provider-aws-s3
       version: ">=v0.37.0"
-    - provider: xpkg.upbound.io/upbound-release-candidates/provider-aws-ssm
+    - provider: xpkg.upbound.io/upbound/provider-aws-ssm
       version: ">=v0.37.0"
